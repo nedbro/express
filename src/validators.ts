@@ -3,8 +3,8 @@ import { body, param, Result, ValidationChain, ValidationError, validationResult
 import { AppError } from "./AppError";
 
 
-export const idValidator: ValidationChain = param('id').exists().toInt().custom(value => !isNaN(value));
-export const textValidator: ValidationChain = body('text').isString().trim().not().isEmpty().escape();
+export const idParamValidator: ValidationChain = param('id').exists().toInt().custom(value => !isNaN(value));
+export const postTextValidator: ValidationChain = body('text').isString().trim().not().isEmpty().escape();
 
 export const validateInput = (req: Request, res: Response): void => {
     const errors: Result<ValidationError> = validationResult(req);

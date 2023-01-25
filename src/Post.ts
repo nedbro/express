@@ -1,12 +1,19 @@
 export class Post {
-    id: number;
+    id: number | undefined;
     text: string;
-    static idCount = 1;
+    private static idCount = 1;
 
     constructor(text: string) {
         console.log('constructor')
-        this.id = Post.idCount;
         this.text = text;
-        Post.idCount++;
+    }
+
+    setId(id?: number) {
+        if (id) {
+            this.id = id;
+        } else {
+            this.id = Post.idCount;
+            Post.idCount++;
+        }
     }
 }
