@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { param, Result, ValidationChain, ValidationError, validationResult } from "express-validator";
+import { body, param, Result, ValidationChain, ValidationError, validationResult } from "express-validator";
 import { AppError } from "./AppError";
 
 
 export const idValidator: ValidationChain = param('id').exists().toInt().custom(value => !isNaN(value));
+export const textValidator: ValidationChain = body('text').isString().trim().not().isEmpty().escape();
 
 export const validateInput = (req: Request, res: Response): void => {
     const errors: Result<ValidationError> = validationResult(req);
