@@ -1,6 +1,8 @@
-import * as express from 'express'
+import * as express from 'express';
 import { Express, NextFunction, Request, Response } from 'express';
-import { param, Result, ValidationChain, ValidationError, validationResult } from 'express-validator';
+import { AppError } from './AppError';
+import { MockService } from './MockService';
+import { idValidator, validateInput } from './validators';
 
 const app: Express = express();
 app.use(express.json());
@@ -8,20 +10,19 @@ app.use(express.json());
 const port = 4000;
 const basePath = "/api";
 
-class AppError extends Error {
-  statusCode: number;
 
-  constructor(statusCode: number, message: string) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
-
-const idValidator: ValidationChain = param('id').exists().toInt().custom(value => !isNaN(value));
+// dependency injection
+const service: MockService = new MockService();
 
 app.get(`${basePath}/posts/:id`, idValidator, (req: Request, res: Response) => {
   validateInput(req, res);
-  res.send('Express + TypeScript Server asdasdasd');
+  const post: Post | undefined = service.getPost(parseInt(req.params['id']));
+
+  if (post) {
+    res.send(post);
+  } else {
+    throw new AppError(404, `Post not found with id ${parseInt(req.params['id'])}`);
+  }
 });
 
 app.post(`${basePath}/posts`, (req: Request, res: Response) => {
@@ -38,9 +39,10 @@ app.delete(`${basePath}/posts/:id`, idValidator, (req: Request, res: Response) =
   res.send('Express + TypeScript Server asdasdasd');
 });
 
-const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+const errorHandler = (error: AppError | Error, req: Request, res: Response, next: NextFunction) => {
   console.error("An error occurred", error.message)
-  return res.status(400).json({ errorMessage: error.message });
+  const statusCode = error instanceof AppError ? error.statusCode : 500;
+  return res.status(statusCode).json({ errorMessage: error.message });
 }
 
 app.use(errorHandler);
@@ -50,11 +52,3 @@ app.listen(port, () => {
 });
 
 
-const validateInput = (req: Request, res: Response): void => {
-  const errors: Result<ValidationError> = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const errorMessage: string = Object.entries(errors.mapped()).map(entrySet => `${entrySet[0]}: ${entrySet[1].msg}`).join(",");
-    throw new AppError(400, errorMessage);
-  }
-}
